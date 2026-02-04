@@ -6,7 +6,7 @@ mod random;
 mod text;
 mod time;
 
-use rand::{thread_rng, Rng};
+use rand::{rng, Rng};
 use std::sync::{
     atomic::{AtomicU32, Ordering},
     LazyLock,
@@ -58,7 +58,7 @@ pub fn cuid() -> String {
 #[doc(hidden)]
 #[inline]
 pub fn one_off_cuid1() -> String {
-    let counter_init = thread_rng().gen();
+    let counter_init = rng().random();
     COUNTER.store(counter_init, Ordering::Relaxed);
     cuid()
 }
@@ -113,7 +113,7 @@ pub fn slug() -> String {
 #[doc(hidden)]
 #[inline]
 pub fn one_off_cuid1_slug() -> String {
-    let counter_init = thread_rng().gen();
+    let counter_init = rng().random();
     COUNTER.store(counter_init, Ordering::Relaxed);
     slug()
 }

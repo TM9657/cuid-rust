@@ -68,7 +68,7 @@ use web_time::{SystemTime, UNIX_EPOCH};
 
 use cuid_util::ToBase36;
 use num::bigint;
-use rand::{seq::SliceRandom, thread_rng, Rng};
+use rand::{prelude::IndexedRandom, rng, Rng};
 use sha3::{Digest, Sha3_512};
 
 // =============================================================================
@@ -93,13 +93,13 @@ const STARTING_CHARS: &str = "abcdefghijklmnopqrstuvwxyz";
 fn fingerprint() -> String {
     hash(
         [
-            thread_rng().gen::<u128>().to_be_bytes(),
-            thread_rng().gen::<u128>().to_be_bytes(),
+            rng().random::<u128>().to_be_bytes(),
+            rng().random::<u128>().to_be_bytes(),
             #[cfg(not(target_family = "wasm"))]
             u128::from(std::process::id()).to_be_bytes(),
             // WASM has no concept of a PID, so just use another random block
             #[cfg(target_family = "wasm")]
-            thread_rng().gen::<u128>().to_be_bytes(),
+            rng().random::<u128>().to_be_bytes(),
             u128::from(get_thread_id()).to_be_bytes(),
         ],
         BIG_LENGTH.into(),
@@ -112,7 +112,7 @@ thread_local! {
     // Updated 2023-08-08 to match updated reference implementation, which notes:
     // > ~22k hosts before 50% chance of initial counter collision
     // > with a remaining counter range of 9.0e+15 in JavaScript.
-    static COUNTER_INIT: u64 = thread_rng().gen_range(0..476_782_367);
+    static COUNTER_INIT: u64 = rng().random_range(0..476_782_367);
 
     /// Use an individual counter per thread, starting at a randomly initialized value.
     ///
@@ -225,7 +225,7 @@ pub fn is_cuid<S: AsRef<str>>(to_check: S) -> bool {
 
 /// Creates a random string of the specified length.
 fn create_entropy(length: u16) -> String {
-    let mut rng = thread_rng();
+    let mut rng = rng();
     let length: usize = length.into();
 
     // Allocate a string with the appropriate capacity to avoid reallocation.
@@ -243,7 +243,7 @@ fn create_entropy(length: u16) -> String {
         // ```js
         // entropy = entropy + Math.floor(random() * 36).toString(36);
         // ```
-        let random_val = rng.gen_range(0u128..36u128);
+        let random_val = rng.random_range(0u128..36u128);
         result.push_str(&random_val.to_base_36());
     }
 
@@ -409,7 +409,7 @@ impl CuidConstructor {
             .as_bytes()
             // Panic safety: choose() only returns None if the slice is empty,
             // and STARTING_CHARS is a statically defined non-empty slice.
-            .choose(&mut thread_rng())
+            .choose(&mut rng())
             .expect("STARTING_CHARS cannot be empty")) as char;
 
         // Return only the requested length
